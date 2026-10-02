@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaga: Product Designer Sênior · Vela Digital</title>
+<meta name="description" content="Exemplo de aplicativo desktop de descrição de vaga, com atributos, vídeo e botão de aplicação. Só HTML e CSS.">
+<style>
+/* ==========================================================================
+   EXEMPLO: aplicativo desktop de descrição de vaga
+
+   Um arquivo só, sem JavaScript e sem imagem. Tudo que parece interativo aqui
+   é CSS: as abas são um grupo de rádio, o botão de tocar é uma caixa de marcar
+   e o "salvar vaga" é outra. É de propósito, e é o que torna o exemplo honesto:
+   nada aqui depende de script pra funcionar nem de arquivo pra carregar.
+
+   As cores, a tipografia e o raio saem dos mesmos tokens do design system do
+   projeto, então este exemplo não destoa do resto.
+   ========================================================================== */
+
+:root {
+  --canvas: #fcfbff;
+  --superficie: #f8f5fe;
+  --elevada: #f2ebfd;
+  --tinta: #19112b;
+  --tinta-suave: #6d6779;
+  --acao: #7c3aed;
+  --acao-tinta: #ffffff;
+  --acao-hover: #6d33d1;
+  --fio: #d3d1d9;
+  --sucesso: #15803d;
+  --aviso: #a16207;
+
+  --raio: 8px;
+  --raio-superficie: 12px;
+  --raio-fino: 6px;
+
+  --espaco: 14px;
+  --altura-linha: 1.65;
+
+  /* Polaridade da camada de acabamento. Este exemplo é de tema claro, então a
+     luz de cima é branca forte e o peso de baixo é um cinza discreto. */
+  --realce: color-mix(in srgb, white 90%, transparent);
+  --realce-suave: color-mix(in srgb, white 55%, transparent);
+  --fio-interno: color-mix(in srgb, black 8%, transparent);
+
+  --fonte: "Inter", "Helvetica Neue", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at center, color-mix(in oklab, var(--acao) 55%, var(--fio)) 1.1px, transparent 1.1px)
+      0 0 / 32px 32px,
+    var(--canvas);
+  color: var(--tinta);
+  font-family: var(--fonte);
+  line-height: var(--altura-linha);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visível e consistente: acessibilidade não é opcional. Sem raio próprio,
+   pra ele acompanhar a forma do elemento em vez de deformar ela. */
+:focus-visible {
+  outline: 2px solid var(--acao);
+  outline-offset: 2px;
+}
+
+/* Escondido dos olhos, não do leitor de tela nem do teclado. */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   A JANELA DO APLICATIVO
+   -------------------------------------------------------------------------- */
+
+.janela {
+  display: flex;
+  flex-direction: column;
+  width: min(1240px, 100%);
+  height: min(820px, calc(100dvh - 48px));
+  overflow: hidden;
+  border: 1px solid var(--fio);
+  border-radius: var(--raio-superficie);
+  background: var(--canvas);
+  /* Profundidade sem sombra externa: borda de 1px, gradiente curto e realce
+     por dentro. Sombra externa é o jeito mais rápido de parecer com todo mundo. */
+  box-shadow: inset 0 1px 0 0 var(--realce);
+}
+
+.barra-janela {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--fio);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 70%);
+  background-color: var(--superficie);
+}
+
+.semaforo {
+  display: flex;
+  gap: 7px;
+}
+
+.semaforo span {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--fio);
+  box-shadow: inset 0 1px 0 0 var(--realce);
+}
+
+.titulo-janela {
+  margin: 0 auto;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.controles-janela {
+  display: flex;
+  gap: 2px;
+}
+
+.corpo {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   COLUNA LATERAL
+   -------------------------------------------------------------------------- */
+
+.lateral {
+  display: flex;
+  width: 216px;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  border-right: 1px solid var(--fio);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 38%);
+  background-color: var(--superficie);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 16px;
+}
+
+.marca-nome {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.menu-titulo {
+  padding: 12px 8px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.item-menu {
+  position: relative;
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--raio);
+  padding: 0 10px;
+  color: var(--tinta-suave);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.item-menu:hover {
+  background: var(--elevada);
+  color: var(--tinta);
+}
+
+.item-menu[aria-current="page"] {
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 55%);
+  background-color: var(--elevada);
+  color: var(--tinta);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
+}
+
+/* A tarja na cor de ação, que marca o item aberto sem depender do tom do fundo. */
+.item-menu[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 2px;
+  height: 20px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--acao);
+}
+
+.item-menu svg { flex-shrink: 0; }
+.item-menu[aria-current="page"] svg { color: var(--acao); }
+
+.contador-menu {
+  margin-left: auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--acao) 12%, transparent);
+  padding: 1px 7px;
+  color: var(--acao);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rodape-lateral {
+  display: flex;
+  margin-top: auto;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--fio);
+  padding: 12px 8px 0;
+}
+
+.avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--acao);
+  color: var(--acao-tinta);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 0 var(--realce-suave);
+}
+
+.identidade { min-width: 0; }
+.identidade strong { display: block; font-size: 13px; font-weight: 500; }
+.identidade span { display: block; font-size: 11px; color: var(--tinta-suave); }
+
+/* --------------------------------------------------------------------------
+   PAINEL
+   -------------------------------------------------------------------------- */
+
+.painel {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.topo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--fio);
+  background: color-mix(in srgb, var(--canvas) 85%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.trilha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.trilha a { border-radius: var(--raio-fino); color: inherit; text-decoration: none; }
+.trilha a:hover { color: var(--tinta); }
+.trilha li[aria-current="page"] { color: var(--tinta); }
+.trilha .separador { color: var(--fio); }
+
+.acoes-topo { display: flex; margin-left: auto; gap: 8px; }
+
+.conteudo {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  align-content: start;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 332px;
+  overflow-y: auto;
+  padding: 24px 20px 32px;
+}
+
+/* --------------------------------------------------------------------------
+   CABEÇALHO DA VAGA
+   -------------------------------------------------------------------------- */
+
+.principal { min-width: 0; }
+
+.cabecalho-vaga { display: flex; align-items: flex-start; gap: 16px; }
+
+.logo-empresa {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid var(--fio);
+  border-radius: var(--raio-superficie);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 60%);
+  background-color: var(--elevada);
+  color: var(--acao);
+}
+
+.cabecalho-vaga h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.linha-empresa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.linha-empresa strong { color: var(--tinta); font-weight: 500; }
+.ponto-separador { color: var(--fio); }
+
+.selo-novo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--sucesso) 25%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sucesso) 12%, transparent);
+  padding: 1px 9px;
+  color: var(--sucesso);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.selo-novo::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   OS ATRIBUTOS DA VAGA
+
+   Eles são uma lista de definição de verdade (`dl`), e não parágrafos soltos:
+   quem usa leitor de tela ouve "Modelo de trabalho: híbrido" em vez de duas
+   frases sem ligação nenhuma entre elas.
+   -------------------------------------------------------------------------- */
+
+.atributos {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 20px 0 0;
+}
+
+.atributo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--fio);
+  border-radius: var(--raio-superficie);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 60%);
+  background-color: var(--superficie);
+  padding: 12px;
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
+}
+
+.atributo svg { flex-shrink: 0; margin-top: 2px; color: var(--acao); }
+
+.atributo dt {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.atributo dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* --------------------------------------------------------------------------
+   O VÍDEO
+
+   O quadro é desenhado em CSS, sem arquivo nenhum. O botão de tocar é uma caixa
+   de marcar escondida: marcada, ela troca o triângulo pela pausa, apaga o véu
+   do cartaz e avança a barra de progresso. Nada aqui roda em laço, e nada finge
+   estar reproduzindo um vídeo que não existe.
+   -------------------------------------------------------------------------- */
+
+.bloco { margin-top: 28px; }
+
+.bloco > h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.video {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--fio);
+  border-radius: var(--raio-superficie);
+  background-color: var(--tinta);
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
+}
+
+.tela {
+  position: relative;
+  display: grid;
+  aspect-ratio: 16 / 9;
+  place-items: center;
+  background-image:
+    radial-gradient(ellipse 70% 60% at 50% 30%, color-mix(in srgb, var(--acao) 55%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in srgb, var(--acao) 22%, transparent), transparent 60%);
+}
+
+/* O cartaz: as formas que ficam atrás do botão de tocar. São decorativas, então
+   saem da árvore de acessibilidade e ninguém as ouve. */
+.cartaz {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.9;
+  transition: opacity 320ms ease;
+}
+
+.cartaz span {
+  position: absolute;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 8%, transparent);
+  box-shadow: inset 0 1px 0 0 color-mix(in srgb, white 18%, transparent);
+}
+
+.cartaz span:nth-child(1) { top: -18%; left: 8%; width: 46%; aspect-ratio: 1; }
+.cartaz span:nth-child(2) { right: -10%; bottom: -26%; width: 52%; aspect-ratio: 1; }
+.cartaz span:nth-child(3) { top: 34%; left: 62%; width: 18%; aspect-ratio: 1; }
+
+.legenda-cartaz {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  max-width: 60%;
+  color: white;
+  transition: opacity 320ms ease;
+}
+
+.legenda-cartaz strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px color-mix(in srgb, black 45%, transparent);
+}
+
+.legenda-cartaz span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: color-mix(in srgb, white 78%, transparent);
+}
+
+.botao-tocar {
+  position: relative;
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 92%, transparent);
+  color: var(--acao);
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease;
+  box-shadow: inset 0 1px 0 0 white;
+}
+
+.botao-tocar:hover { transform: scale(1.04); background: white; }
+.botao-tocar:active { transform: scale(0.98); }
+
+.botao-tocar .pausa { display: none; }
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid color-mix(in srgb, white 14%, transparent);
+  padding: 10px 14px;
+  color: color-mix(in srgb, white 82%, transparent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trilha-tempo {
+  position: relative;
+  height: 4px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 18%, transparent);
+}
+
+.trilha-tempo i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--acao);
+  transition: width 320ms ease;
+}
+
+/* O estado de tocando, inteiro em CSS. */
+#tocar:checked ~ .tela .cartaz,
+#tocar:checked ~ .tela .legenda-cartaz { opacity: 0.25; }
+#tocar:checked ~ .tela .botao-tocar .tocar { display: none; }
+#tocar:checked ~ .tela .botao-tocar .pausa { display: block; }
+#tocar:checked ~ .controles .trilha-tempo i { width: 38%; }
+#tocar:checked ~ .controles .tempo-atual::after { content: "0:51"; }
+#tocar:focus-visible ~ .tela .botao-tocar { outline: 3px solid white; outline-offset: 3px; }
+
+.tempo-atual::after { content: "0:00"; }
+
+/* --------------------------------------------------------------------------
+   AS ABAS
+
+   Um grupo de rádio de verdade: as setas do teclado andam entre as abas sozinhas,
+   o leitor de tela anuncia "1 de 3", e sem JavaScript nada disso quebra.
+   -------------------------------------------------------------------------- */
+
+.abas { margin: 28px 0 0; border: 0; padding: 0; }
+
+.abas > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.rotulos-aba {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--fio);
+}
+
+.rotulos-aba label {
+  position: relative;
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border-radius: var(--raio) var(--raio) 0 0;
+  padding: 0 14px;
+  color: var(--tinta-suave);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.rotulos-aba label:hover { background: var(--elevada); color: var(--tinta); }
+
+.rotulos-aba label::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: -1px;
+  left: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--acao);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+#aba-descricao:checked ~ .rotulos-aba label[for="aba-descricao"],
+#aba-requisitos:checked ~ .rotulos-aba label[for="aba-requisitos"],
+#aba-empresa:checked ~ .rotulos-aba label[for="aba-empresa"] {
+  color: var(--tinta);
+  font-weight: 500;
+}
+
+#aba-descricao:checked ~ .rotulos-aba label[for="aba-descricao"]::after,
+#aba-requisitos:checked ~ .rotulos-aba label[for="aba-requisitos"]::after,
+#aba-empresa:checked ~ .rotulos-aba label[for="aba-empresa"]::after { opacity: 1; }
+
+#aba-descricao:focus-visible ~ .rotulos-aba label[for="aba-descricao"],
+#aba-requisitos:focus-visible ~ .rotulos-aba label[for="aba-requisitos"],
+#aba-empresa:focus-visible ~ .rotulos-aba label[for="aba-empresa"] {
+  outline: 2px solid var(--acao);
+  outline-offset: -2px;
+}
+
+.paineis-aba > section { display: none; padding-top: 18px; }
+
+#aba-descricao:checked ~ .paineis-aba .aba-descricao,
+#aba-requisitos:checked ~ .paineis-aba .aba-requisitos,
+#aba-empresa:checked ~ .paineis-aba .aba-empresa { display: block; }
+
+.texto { max-width: 68ch; }
+.texto p { margin: 0 0 12px; font-size: 14px; color: var(--tinta-suave); }
+.texto h3 { margin: 20px 0 8px; font-size: 14px; font-weight: 600; }
+.texto ul { margin: 0; padding: 0; list-style: none; }
+
+.texto li {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--tinta-suave);
+}
+
+.texto li::before {
+  content: "";
+  width: 12px;
+  height: 1px;
+  flex-shrink: 0;
+  margin-top: 11px;
+  background: var(--acao);
+}
+
+/* --------------------------------------------------------------------------
+   A COLUNA DE APLICAÇÃO
+
+   Ela é `position: sticky` de propósito: o botão de aplicar é a razão desta
+   tela existir, e ele não pode sumir enquanto a pessoa lê a descrição.
+   -------------------------------------------------------------------------- */
+
+.lado { min-width: 0; }
+
+.cartao {
+  border: 1px solid var(--fio);
+  border-radius: var(--raio-superficie);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 55%);
+  background-color: var(--superficie);
+  padding: 18px;
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
+}
+
+.cartao + .cartao { margin-top: 16px; }
+
+.cartao-aplicar { position: sticky; top: 0; }
+
+.faixa-salarial { display: flex; align-items: baseline; gap: 8px; }
+
+.faixa-salarial strong {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.faixa-salarial span { font-size: 13px; color: var(--tinta-suave); }
+
+.nota-salario {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+/* O botão de aplicar: a cor de ação com o fio de luz no topo e o peso escuro na
+   base, sem sombra pra fora. O hover acende com brilho em vez de trocar de
+   tinta, porque mudar de cor no hover é o que faz botão parecer barato. */
+.botao-aplicar {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: var(--raio);
+  background-color: var(--acao);
+  background-image:
+    linear-gradient(to bottom, var(--realce-suave) 0 1px, transparent 1px),
+    linear-gradient(to bottom, transparent 76%, color-mix(in srgb, var(--acao) 88%, black) 100%);
+  color: var(--acao-tinta);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 150ms ease;
+}
+
+.botao-aplicar:hover { filter: brightness(1.08); }
+.botao-aplicar:active { transform: translateY(1px); }
+
+.chip-seta {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--acao);
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
+}
+
+.acoes-secundarias { display: flex; gap: 8px; margin-top: 10px; }
+
+.botao-secundario {
+  display: flex;
+  min-height: 40px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--fio);
+  border-radius: var(--raio);
+  background-image: linear-gradient(to bottom, var(--realce-suave), transparent 60%);
+  background-color: var(--superficie);
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.botao-secundario:hover { border-color: color-mix(in srgb, var(--acao) 40%, transparent); background-color: var(--elevada); }
+
+/* Salvar a vaga é outra caixa de marcar: marcada, o marcador enche e o texto
+   muda. Sem script, e o estado é anunciado pelo próprio `input`. */
+#salvar { position: absolute; width: 1px; height: 1px; opacity: 0; }
+#salvar:focus-visible + .botao-secundario { outline: 2px solid var(--acao); outline-offset: 2px; }
+#salvar:checked + .botao-secundario { border-color: color-mix(in srgb, var(--acao) 45%, transparent); color: var(--acao); }
+#salvar:checked + .botao-secundario svg { fill: currentColor; }
+#salvar:checked + .botao-secundario .rotulo-salvar::after { content: "Vaga salva"; }
+#salvar + .botao-secundario .rotulo-salvar::after { content: "Salvar vaga"; }
+
+.aviso-prazo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid var(--fio);
+  padding-top: 12px;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.aviso-prazo svg { flex-shrink: 0; margin-top: 2px; color: var(--aviso); }
+
+.cartao h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.resumo { margin: 0; font-size: 13px; }
+.resumo > div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.resumo > div + div { border-top: 1px solid var(--fio); }
+.resumo dt { color: var(--tinta-suave); }
+.resumo dd { margin: 0; font-weight: 500; text-align: right; }
+
+.recrutadora { display: flex; align-items: center; gap: 12px; }
+.recrutadora .avatar { width: 40px; height: 40px; font-size: 13px; }
+.recrutadora strong { display: block; font-size: 13px; font-weight: 500; }
+.recrutadora span { display: block; font-size: 12px; color: var(--tinta-suave); }
+
+.etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+
+.etiquetas li {
+  border: 1px solid var(--fio);
+  border-radius: 999px;
+  background: var(--elevada);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+/* --------------------------------------------------------------------------
+   BARRA DE ESTADO
+   -------------------------------------------------------------------------- */
+
+.rodape-status {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+  height: 32px;
+  padding: 0 16px;
+  border-top: 1px solid var(--fio);
+  background: var(--superficie);
+  font-size: 11px;
+  color: var(--tinta-suave);
+}
+
+.rodape-status span:last-child { margin-left: auto; }
+
+/* --------------------------------------------------------------------------
+   TELA ESTREITA
+
+   A janela não deixa de existir: ela só perde a coluna lateral e passa a
+   empilhar o conteúdo. O botão de aplicar sobe pro topo, porque numa tela
+   estreita ele não pode ficar depois de três blocos de texto.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .conteudo { grid-template-columns: minmax(0, 1fr); }
+  .lado { order: -1; }
+  .cartao-aplicar { position: static; }
+}
+
+@media (max-width: 720px) {
+  body { padding: 0; }
+  .janela { height: 100dvh; border: 0; border-radius: 0; }
+  .lateral { display: none; }
+  .cabecalho-vaga h1 { font-size: 21px; }
+}
+
+/* Quem pediu menos movimento recebe menos movimento: tudo aparece direto no
+   estado final, sem transição nenhuma. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="janela">
+
+  <!-- Moldura de janela: dá o contexto de "isto é um aplicativo" em dois traços. -->
+  <div class="barra-janela">
+    <div class="semaforo" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p class="titulo-janela">Talentos · Vaga aberta</p>
+    <div class="controles-janela" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" style="color: var(--fio)"><path d="M5 12h14"/></svg>
+    </div>
+  </div>
+
+  <div class="corpo">
+
+    <nav class="lateral" aria-label="Navegação principal">
+      <div class="marca">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true" style="color: var(--acao)">
+          <rect x="4.5" y="5.5" width="23" height="21" rx="4" stroke="currentColor" stroke-width="2" stroke-opacity="0.35"/>
+          <path d="M11 3.5v4M21 3.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="17" r="5.5" fill="currentColor"/>
+          <path d="M13.9 17.1l1.6 1.6 2.9-3.2" stroke="var(--acao-tinta)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="marca-nome">Talentos</span>
+      </div>
+
+      <p class="menu-titulo">Buscar</p>
+
+      <a class="item-menu" aria-current="page" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Vagas
+        <span class="contador-menu">128</span>
+      </a>
+
+      <a class="item-menu" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        Minhas candidaturas
+        <span class="contador-menu">6</span>
+      </a>
+
+      <a class="item-menu" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/></svg>
+        Empresas
+      </a>
+
+      <a class="item-menu" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 4H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3l4 3 4-3h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/></svg>
+        Mensagens
+        <span class="contador-menu">2</span>
+      </a>
+
+      <p class="menu-titulo">Conta</p>
+
+      <a class="item-menu" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Meu perfil
+      </a>
+
+      <a class="item-menu" href="#conteudo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.2a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.2a2 2 0 0 1 1 1.7V20a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.2a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.2a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></svg>
+        Configurações
+      </a>
+
+      <div class="rodape-lateral">
+        <span class="avatar" aria-hidden="true">AP</span>
+        <span class="identidade">
+          <strong>Ana Prado</strong>
+          <span>Product Designer</span>
+        </span>
+      </div>
+    </nav>
+
+    <div class="painel">
+
+      <header class="topo">
+        <nav aria-label="Trilha de navegação">
+          <ol class="trilha">
+            <li><a href="#conteudo">Vagas</a></li>
+            <li class="separador" aria-hidden="true">/</li>
+            <li><a href="#conteudo">Design</a></li>
+            <li class="separador" aria-hidden="true">/</li>
+            <li aria-current="page">Product Designer Sênior</li>
+          </ol>
+        </nav>
+
+        <div class="acoes-topo">
+          <button type="button" class="botao-secundario" style="min-width: 40px; padding: 0 12px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg>
+            Compartilhar
+          </button>
+        </div>
+      </header>
+
+      <main class="conteudo" id="conteudo">
+
+        <div class="principal">
+
+          <div class="cabecalho-vaga">
+            <span class="logo-empresa" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 12 3l9 18Z"/><path d="M8.5 14h7"/></svg>
+            </span>
+
+            <div>
+              <h1>Product Designer Sênior</h1>
+              <p class="linha-empresa">
+                <strong>Vela Digital</strong>
+                <span class="ponto-separador" aria-hidden="true">·</span>
+                São Paulo, SP
+                <span class="ponto-separador" aria-hidden="true">·</span>
+                Publicada há 3 dias
+                <span class="selo-novo">Vaga nova</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Os atributos da vaga -->
+          <dl class="atributos">
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 8v4l3 2"/></svg>
+              <div>
+                <dt>Jornada</dt>
+                <dd>Tempo integral</dd>
+              </div>
+            </div>
+
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div>
+                <dt>Modelo</dt>
+                <dd>Híbrido, 2 dias no escritório</dd>
+              </div>
+            </div>
+
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+              <div>
+                <dt>Contrato</dt>
+                <dd>CLT efetivo</dd>
+              </div>
+            </div>
+
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <div>
+                <dt>Faixa salarial</dt>
+                <dd>R$ 12.000 a R$ 16.000</dd>
+              </div>
+            </div>
+
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="m3 17 9 5 9-5M3 12l9 5 9-5"/></svg>
+              <div>
+                <dt>Senioridade</dt>
+                <dd>Sênior, 5 anos ou mais</dd>
+              </div>
+            </div>
+
+            <div class="atributo">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <div>
+                <dt>Time</dt>
+                <dd>Produto, 9 pessoas</dd>
+              </div>
+            </div>
+          </dl>
+
+          <!-- O vídeo -->
+          <section class="bloco" aria-labelledby="titulo-video">
+            <h2 id="titulo-video">Conheça o time antes de se candidatar</h2>
+
+            <div class="video">
+              <input type="checkbox" id="tocar" class="so-leitor">
+
+              <div class="tela">
+                <div class="cartaz" aria-hidden="true"><span></span><span></span><span></span></div>
+
+                <div class="legenda-cartaz" aria-hidden="true">
+                  <strong>Um dia no time de Produto</strong>
+                  <span>Com Marcela Uchoa, Head de Design</span>
+                </div>
+
+                <label for="tocar" class="botao-tocar">
+                  <span class="so-leitor">Tocar o vídeo "Um dia no time de Produto", 2 minutos e 14 segundos</span>
+                  <svg class="tocar" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5a1 1 0 0 1 1.5-.87l9 6.5a1 1 0 0 1 0 1.74l-9 6.5A1 1 0 0 1 8 18.5Z"/></svg>
+                  <svg class="pausa" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
+                </label>
+              </div>
+
+              <div class="controles">
+                <span class="tempo-atual" aria-hidden="true"></span>
+                <span class="trilha-tempo" aria-hidden="true"><i></i></span>
+                <span aria-hidden="true">2:14</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+              </div>
+            </div>
+          </section>
+
+          <!-- As abas -->
+          <fieldset class="abas">
+            <legend class="so-leitor">Seções da vaga</legend>
+
+            <input type="radio" name="aba" id="aba-descricao" checked>
+            <input type="radio" name="aba" id="aba-requisitos">
+            <input type="radio" name="aba" id="aba-empresa">
+
+            <div class="rotulos-aba">
+              <label for="aba-descricao">Descrição</label>
+              <label for="aba-requisitos">Requisitos</label>
+              <label for="aba-empresa">Sobre a empresa</label>
+            </div>
+
+            <div class="paineis-aba">
+
+              <section class="aba-descricao texto">
+                <p>
+                  A Vela Digital está montando o time que vai redesenhar a experiência
+                  de contratação dentro do nosso produto. Você entra pra liderar o
+                  design de ponta a ponta de uma das três frentes: descoberta de vagas,
+                  candidatura ou acompanhamento.
+                </p>
+                <p>
+                  Aqui design não é a última etapa: você senta com produto e engenharia
+                  desde o problema, e a decisão de escopo é tomada junto. Quem já fez
+                  isso sabe que a parte difícil não é a tela, é escolher qual problema
+                  vale resolver.
+                </p>
+
+                <h3>O que você vai fazer</h3>
+                <ul>
+                  <li>Conduzir a descoberta da sua frente, do problema à validação com gente de verdade</li>
+                  <li>Desenhar os fluxos e as telas, e defender as decisões com dado e com histórico</li>
+                  <li>Manter e evoluir o design system junto com a engenharia, em código</li>
+                  <li>Medir o resultado do que subiu e voltar pra ajustar o que não funcionou</li>
+                </ul>
+              </section>
+
+              <section class="aba-requisitos texto">
+                <h3 style="margin-top: 0">O que a gente espera</h3>
+                <ul>
+                  <li>Cinco anos ou mais desenhando produto digital, com casos que você consiga destrinchar</li>
+                  <li>Portfólio que mostre o problema e a decisão, não só a tela final</li>
+                  <li>Prática de pesquisa com usuário: você já conduziu entrevista e teste de usabilidade sozinha</li>
+                  <li>Conforto com Figma em nível de biblioteca e de componente com variante</li>
+                  <li>Leitura de métrica de produto: você sabe dizer se o que subiu funcionou</li>
+                </ul>
+
+                <h3>Conta ponto, mas não é obrigatório</h3>
+                <ul>
+                  <li>Ler e mexer em HTML e CSS pra conversar melhor com quem implementa</li>
+                  <li>Experiência em produto de recrutamento ou de marketplace de dois lados</li>
+                  <li>Inglês pra ler documentação e participar de conversa com o time de fora</li>
+                </ul>
+              </section>
+
+              <section class="aba-empresa texto">
+                <p>
+                  A Vela Digital nasceu em 2019 e hoje conecta empresas de tecnologia a
+                  quem procura vaga no Brasil inteiro. São 74 pessoas, sendo 9 no time
+                  de Produto, e o design responde direto pra fundação da empresa.
+                </p>
+                <p>
+                  O processo seletivo tem quatro etapas e leva em média duas semanas:
+                  conversa inicial com recrutamento, entrevista técnica com portfólio,
+                  um exercício curto feito em casa e uma conversa final com o time.
+                </p>
+
+                <h3>Benefícios</h3>
+                <ul>
+                  <li>Plano de saúde e odontológico sem coparticipação, extensivo a dependentes</li>
+                  <li>Vale refeição ou alimentação de livre escolha, sem desconto</li>
+                  <li>Auxílio de mil reais pra montar o cantinho de trabalho em casa</li>
+                  <li>Verba anual de estudo e um dia por mês reservado pra aprender</li>
+                  <li>30 dias de férias mais uma semana de recesso no fim do ano</li>
+                </ul>
+              </section>
+
+            </div>
+          </fieldset>
+
+        </div>
+
+        <!-- A coluna de aplicação -->
+        <aside class="lado" aria-labelledby="titulo-aplicar">
+          <div class="cartao cartao-aplicar">
+            <h2 id="titulo-aplicar" class="so-leitor">Candidatar-se a esta vaga</h2>
+
+            <p class="faixa-salarial">
+              <strong>R$ 12k a 16k</strong>
+              <span>por mês</span>
+            </p>
+            <p class="nota-salario">Faixa informada pela empresa, aberta na primeira conversa.</p>
+
+            <button type="button" class="botao-aplicar">
+              Candidatar-se agora
+              <span class="chip-seta" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
+            </button>
+
+            <div class="acoes-secundarias">
+              <input type="checkbox" id="salvar">
+              <label for="salvar" class="botao-secundario">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg>
+                <span class="rotulo-salvar"></span>
+              </label>
+
+              <button type="button" class="botao-secundario">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 4H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3l4 3 4-3h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/></svg>
+                Perguntar
+              </button>
+            </div>
+
+            <p class="aviso-prazo">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              As candidaturas fecham em 8 dias. Até agora, 42 pessoas se candidataram.
+            </p>
+          </div>
+
+          <div class="cartao">
+            <h2>Resumo</h2>
+            <dl class="resumo">
+              <div><dt>Área</dt><dd>Design de Produto</dd></div>
+              <div><dt>Vagas abertas</dt><dd>1</dd></div>
+              <div><dt>Início</dt><dd>Imediato</dd></div>
+              <div><dt>Processo</dt><dd>4 etapas, cerca de 2 semanas</dd></div>
+              <div><dt>Idiomas</dt><dd>Português</dd></div>
+            </dl>
+          </div>
+
+          <div class="cartao">
+            <h2>Quem conduz o processo</h2>
+            <div class="recrutadora">
+              <span class="avatar" aria-hidden="true">MU</span>
+              <span>
+                <strong>Marcela Uchoa</strong>
+                <span>Head de Design na Vela Digital</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="cartao">
+            <h2>Palavras-chave</h2>
+            <ul class="etiquetas">
+              <li>Design de Produto</li>
+              <li>Pesquisa com usuário</li>
+              <li>Design system</li>
+              <li>Figma</li>
+              <li>Métricas de produto</li>
+            </ul>
+          </div>
+        </aside>
+
+      </main>
+
+      <footer class="rodape-status">
+        <span>Vaga #4821</span>
+        <span aria-hidden="true">·</span>
+        <span>Atualizada hoje, 09:12</span>
+        <span>Exemplo estático: só HTML e CSS, sem JavaScript</span>
+      </footer>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
