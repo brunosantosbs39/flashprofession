@@ -1,0 +1,28 @@
+// Gerado por `npm run banco:desenhar` (prisma db pull) a partir do Neon.
+// Leia como documentação do que EXISTE no banco agora. O app não usa o Prisma
+// pra falar com o banco (ver src/lib/banco.ts); ele serve pro Studio e pro
+// mapa em /banco.
+datasource db {
+  provider = "postgresql"
+}
+
+model registros {
+  usuario   String
+  colecao   String
+  id        String
+  dados     Json
+  criado_em DateTime @default(now()) @db.Timestamptz(6)
+  usuarios  usuarios @relation(fields: [usuario], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([usuario, colecao, id])
+  @@index([usuario, colecao, criado_em(sort: Desc)], map: "registros_usuario_colecao_criado_em")
+}
+
+model usuarios {
+  id            String      @id
+  email         String
+  nome          String
+  criado_em     DateTime    @default(now()) @db.Timestamptz(6)
+  ultimo_acesso DateTime    @default(now()) @db.Timestamptz(6)
+  registros     registros[]
+}
