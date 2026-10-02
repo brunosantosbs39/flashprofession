@@ -72,3 +72,6 @@ Por novos domínios:
 ## Regra de segurança
 
 Nenhuma alteração de produto da V2 deve ser feita na branch `v1-stable`.
+
+
+<!-- deploy-trigger: vercel preview -->
