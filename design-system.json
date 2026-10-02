@@ -1,0 +1,34 @@
+{
+  "id": "meu-visual",
+  "name": "Meu visual",
+  "mode": "light",
+  "tokens": {
+    "canvas": "#fcfbff",
+    "surface": "#f8f5fe",
+    "surfaceElevated": "#f2ebfd",
+    "ink": "#19112b",
+    "inkMuted": "#6d6779",
+    "primary": "#7c3aed",
+    "primaryInk": "#ffffff",
+    "primaryHover": "#6d33d1",
+    "primaryAccent": "#7c3aed",
+    "hairline": "#d3d1d9",
+    "success": "#15803d",
+    "danger": "#b91c1c",
+    "warning": "#a16207"
+  },
+  "type": {
+    "display": "\"Inter\", \"Helvetica Neue\", Arial, sans-serif",
+    "body": "\"Inter\", \"Helvetica Neue\", Arial, sans-serif",
+    "displayWeight": 600,
+    "tracking": "-0.02em"
+  },
+  "radius": "8px",
+  "layout": {
+    "density": "comfortable",
+    "space": "14px",
+    "lineHeight": 1.65
+  },
+  "radiusSurface": "8px",
+  "radiusFine": "8px"
+}
