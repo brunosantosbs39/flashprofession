@@ -1,0 +1,100 @@
+/*
+ * As receitas da home v2, a versão gritante.
+ *
+ * TODA cor sai dos tokens --ds-* ou de color-mix sobre eles, como manda a
+ * regra da casa: trocar o design-system.json troca esta página junto. O que
+ * este arquivo adiciona é a linguagem do coolist: fundo chapado na cor de
+ * ação, display esmagado em caixa alta com sombra dura, grade de fundo,
+ * cartões de vidro e o selo circular girando.
+ *
+ * Só a home v2 importa este arquivo. Nada daqui vaza pro app.
+ */
+
+.v2 {
+  /* O fundo é a cor de ação CHAPADA, sem gradiente: é isso que grita. */
+  --v2-fundo: var(--ds-primary);
+  /* A sombra dura da manchete: a cor de ação afundada na tinta. */
+  --v2-sombra: color-mix(in srgb, var(--ds-primary) 35%, var(--ds-ink));
+  /* O acento pop, papel do lime no coolist: lilás quase branco, saturado de leve. */
+  --v2-pop: color-mix(in srgb, var(--ds-primary) 14%, white);
+  /* A tinta que escreve por cima do pop. */
+  --v2-pop-tinta: var(--ds-ink);
+}
+
+/* A manchete: peso máximo, caixa alta, linhas quase encostadas. */
+.v2-display {
+  font-family: var(--ds-font-display), "Arial Black", Impact, sans-serif;
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+/* A sombra dura, degrau por degrau, que dá o volume de cartaz. */
+.v2-sombra-dura {
+  text-shadow:
+    1px 1px 0 var(--v2-sombra), 2px 2px 0 var(--v2-sombra), 3px 3px 0 var(--v2-sombra),
+    4px 4px 0 var(--v2-sombra), 5px 5px 0 var(--v2-sombra), 6px 6px 0 var(--v2-sombra),
+    7px 7px 0 var(--v2-sombra), 8px 8px 0 var(--v2-sombra), 9px 9px 0 var(--v2-sombra),
+    10px 10px 0 var(--v2-sombra);
+}
+
+/* O rótulo micro: pequeno, pesado, espaçado, sempre em caixa alta. */
+.v2-micro {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* A grade de fundo do herói, um fio claro a cada 4rem. */
+.v2-grade {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, white 10%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, white 10%, transparent) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+}
+
+/* O painel branco que sobe por cima do herói, de cantos largos. */
+.v2-painel-topo {
+  border-top-left-radius: 2.5rem;
+  border-top-right-radius: 2.5rem;
+  box-shadow: 0 -20px 50px color-mix(in srgb, var(--ds-ink) 22%, transparent);
+}
+@media (min-width: 768px) {
+  .v2-painel-topo {
+    border-top-left-radius: 3.5rem;
+    border-top-right-radius: 3.5rem;
+  }
+}
+
+/* O cartão de vidro: branco translúcido, borrado, torto até o ponteiro chegar. */
+.v2-vidro {
+  background: color-mix(in srgb, white 18%, transparent);
+  border: 1px solid color-mix(in srgb, white 40%, transparent);
+  backdrop-filter: blur(12px);
+  transition: transform 0.5s;
+}
+
+/* Flutuações e giro, em CSS puro: a página continua sem JavaScript próprio. */
+@keyframes v2-flutuar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+.v2-flutua {
+  animation: v2-flutuar 5s ease-in-out infinite;
+}
+.v2-flutua-tarde {
+  animation: v2-flutuar 6s ease-in-out 1s infinite;
+}
+@keyframes v2-girar {
+  to { transform: rotate(360deg); }
+}
+.v2-gira {
+  animation: v2-girar 14s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v2-flutua, .v2-flutua-tarde, .v2-gira {
+    animation: none;
+  }
+}
