@@ -1,272 +1,240 @@
 "use client"
 
-import Link from "next/link"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { CabecalhoPagina } from "@/components/app/cabecalho-pagina"
 import { Icone } from "@/components/app/icone"
 import { BotaoLink } from "@/components/marketing/botao-link"
-import { BarraProgresso, Card, CardConteudo, EstadoVazio } from "@/components/ui"
-import { palavras, sistema } from "@/content/site"
-import { PROFISSOES, acharProfissao } from "@/lib/catalogo"
-import { contar } from "@/lib/formato"
-import {
-  formatarHoras,
-  minutosNoPeriodo,
-  percentualDoNivel,
-  proximaAcao,
-  scoreDaPessoa,
-  sequenciaDeDias,
-  ultimaData,
-} from "@/lib/jornada"
-import { COMUNIDADE_RANKING } from "@/lib/catalogo"
-import { useDados } from "@/lib/store"
-import { useSessao } from "@/lib/store"
+import { Card, CardConteudo } from "@/components/ui"
+import { feedInicial } from "@/marketplace/mock-data"
+import type { ItemFeed } from "@/marketplace/types"
 
-const textos = sistema.inicio
+type Filtro = "para-mim" | "proximos" | "agora" | "trabalhos" | "profissionais"
 
-/**
- * A primeira tela depois de entrar (ONB-01): descoberta e retomada juntas.
- *
- * Ela não é um catálogo de módulos: a peça central é "continuar de onde parou",
- * com a única próxima ação recomendada, e os indicadores em volta levam cada um
- * pro seu detalhamento (ONB-02). Quando a pessoa é nova, a mesma tela vira o
- * convite pra escolher a carreira (ONB-03): o estado muda, a tela é uma só.
- */
-export default function PaginaInicio() {
-  const { dados, jornada } = useDados()
-  const sessaoDeLogin = useSessao()
+const filtros: Array<{ id: Filtro; rotulo: string }> = [
+  { id: "para-mim", rotulo: "Para mim" },
+  { id: "proximos", rotulo: "Próximos" },
+  { id: "agora", rotulo: "Disponíveis agora" },
+  { id: "trabalhos", rotulo: "Trabalhos" },
+  { id: "profissionais", rotulo: "Profissionais" },
+]
 
-  const profissao = acharProfissao(jornada?.profissaoId)
-  const acao = proximaAcao(jornada)
+export default function PaginaInicioMarketplace() {
+  const [filtro, setFiltro] = useState<Filtro>("para-mim")
 
-  const indicadores = useMemo(() => {
-    if (!jornada?.resultado || !profissao) return null
-
-    const percentual = percentualDoNivel(
-      jornada.resultado.nivel,
-      profissao.competencias,
-      jornada.competenciasConcluidas
-    )
-    const score = scoreDaPessoa(dados)
-    const posicao = jornada.publico.participaRanking
-      ? COMUNIDADE_RANKING.filter((linha) => linha.score > score).length + 1
-      : null
-
-    return {
-      nivel: jornada.resultado.nivel,
-      percentual,
-      concluidas: jornada.competenciasConcluidas.length,
-      totais: profissao.competencias.length,
-      minutosSemana: minutosNoPeriodo(dados.sessoes, 7),
-      sequencia: sequenciaDeDias(dados.sessoes),
-      cases: dados.evidencias.filter((evidencia) => evidencia.estado === "case").length,
-      posicao,
-      ultimaAtividade: ultimaData(dados.sessoes),
+  const itens = useMemo(() => {
+    if (filtro === "trabalhos") return feedInicial.filter((item) => item.tipo === "trabalho")
+    if (filtro === "profissionais") return feedInicial.filter((item) => item.tipo === "disponibilidade")
+    if (filtro === "agora") {
+      return feedInicial.filter(
+        (item) => item.tipo === "disponibilidade" && item.profissional.disponivelAgora
+      )
     }
-  }, [dados, jornada, profissao])
-
-  const saudacao = saudacaoDaHora()
-  const nome = sessaoDeLogin?.nome?.split(" ")[0]
-
-  // O estado de quem acabou de chegar: a escolha de carreira é a tela (ONB-03).
-  if (!jornada || !jornada.profissaoId) {
-    return (
-      <>
-        <CabecalhoPagina
-          titulo={textos.titulo}
-          descricao={nome ? `${saudacao}, ${nome}.` : `${saudacao}.`}
-        />
-
-        <div className="superficie rounded-ds-surface border border-hairline" data-tour="continuar">
-          <EstadoVazio
-            icone={<Icone nome="carreiras" />}
-            titulo={sistema.vazios.inicioNovo.titulo}
-            texto={sistema.vazios.inicioNovo.texto}
-            acao={
-              <BotaoLink href="/app/carreiras" comChip iconeDireita={<Icone nome="seta-direita" />}>
-                {sistema.vazios.inicioNovo.acao}
-              </BotaoLink>
-            }
-          />
-        </div>
-
-        <AlternativasDeCarreira excetoId={null} />
-      </>
-    )
-  }
+    if (filtro === "proximos") {
+      return [...feedInicial].sort((a, b) => distancia(a) - distancia(b))
+    }
+    return feedInicial
+  }, [filtro])
 
   return (
     <>
       <CabecalhoPagina
-        titulo={textos.titulo}
-        descricao={nome ? `${saudacao}, ${nome}.` : `${saudacao}.`}
+        titulo="Encontre trabalho e profissionais perto de você"
+        descricao="Oferta e demanda local em tempo quase real."
+        acoes={
+          <BotaoLink href="/app/publicar" iconeEsquerda={<Icone nome="mais" />}>
+            Publicar
+          </BotaoLink>
+        }
       />
 
-      {/* A peça central: retomar de onde parou, com UMA ação recomendada. */}
-      <Card className="faixa-topo overflow-hidden" data-tour="continuar">
-        <CardConteudo className="flex flex-col gap-4 p-6 sm:p-7">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-muted">
-            <span className="flex items-center gap-1.5">
-              <Icone nome="carreiras" className="size-4 text-primary-accent" />
-              {textos.objetivoRotulo}: <strong className="font-medium text-ink">{profissao?.nome}</strong>
-            </span>
-            {indicadores && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>
-                  {textos.nivelRotulo} {indicadores.nivel} {textos.de5}
-                </span>
-              </>
-            )}
-          </div>
-
-          <div>
-            <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
-              {textos.continuar.titulo}
+      <section className="grid gap-3 md:grid-cols-3">
+        <Card className="md:col-span-2">
+          <CardConteudo className="p-5 sm:p-6">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+              Busca rápida
             </p>
-            <h2 className="mt-1 font-display text-xl leading-snug text-balance text-ink sm:text-2xl">
-              {acao.rotulo}
+            <h2 className="mt-1 font-display text-xl text-ink">
+              O que você precisa hoje?
             </h2>
-            <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted">{acao.descricao}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4">
-            <BotaoLink href={acao.href} tamanho="lg" comChip iconeDireita={<Icone nome="seta-direita" />}>
-              {textos.continuar.rotulo}
-            </BotaoLink>
-
-            {indicadores && (
-              <div className="min-w-[180px] flex-1 sm:max-w-[260px]">
-                <BarraProgresso
-                  valor={indicadores.percentual}
-                  rotulo={`${indicadores.percentual}% ${textos.ateProximoNivel}`}
-                  mostrarValor
-                />
-                <p className="mt-1 text-[12px] text-muted">{textos.ateProximoNivel}</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <div className="superficie flex min-h-12 flex-1 items-center gap-2 rounded-full border border-hairline px-4 text-sm text-muted">
+                <Icone nome="carreiras" className="size-4" />
+                Pedreiro, diarista, eletricista, jardineiro...
               </div>
-            )}
-          </div>
-        </CardConteudo>
-      </Card>
+              <BotaoLink href="/app/explorar" tamanho="lg" comChip iconeDireita={<Icone nome="seta-direita" />}>
+                Explorar perto de mim
+              </BotaoLink>
+            </div>
+          </CardConteudo>
+        </Card>
 
-      {/* Os indicadores consolidados (ONB-02), cada um levando ao detalhe. */}
-      {indicadores && (
-        <section aria-label={textos.indicadores.titulo} className="mt-6">
-          <h2 className="sr-only">{textos.indicadores.titulo}</h2>
-          <dl
-            className="grid gap-3"
-            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
-          >
-            <Indicador
-              icone="nivel"
-              rotulo={textos.indicadores.nivel}
-              valor={`${indicadores.nivel} ${textos.de5}`}
-              href="/app/mapa"
-            />
-            <Indicador
-              icone="acertei"
-              rotulo={textos.indicadores.competencias}
-              valor={`${indicadores.concluidas} de ${indicadores.totais}`}
-              href="/app/progresso"
-            />
-            <Indicador
-              icone="tempo"
-              rotulo={textos.indicadores.horasSemana}
-              valor={formatarHoras(indicadores.minutosSemana)}
-              href="/app/progresso"
-            />
-            <Indicador
-              icone="sequencia"
-              rotulo={textos.indicadores.sequencia}
-              valor={contar(indicadores.sequencia, palavras.dia.singular, palavras.dia.plural)}
-              href="/app/progresso"
-            />
-            <Indicador
-              icone="evidencia"
-              rotulo={textos.indicadores.cases}
-              valor={String(indicadores.cases)}
-              href="/app/perfil"
-            />
-            {indicadores.posicao !== null && (
-              <Indicador
-                icone="ranking"
-                rotulo={textos.indicadores.ranking}
-                valor={`#${indicadores.posicao}`}
-                href="/app/ranking"
-              />
-            )}
-          </dl>
-        </section>
-      )}
+        <Card>
+          <CardConteudo className="flex h-full flex-col justify-between gap-4 p-5">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Disponibilidade
+              </p>
+              <p className="mt-1 font-display text-lg text-ink">Está livre para trabalhar?</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted">
+                Publique sua disponibilidade e apareça para contratantes próximos.
+              </p>
+            </div>
+            <BotaoLink
+              href="/app/publicar?tipo=disponibilidade"
+              variante="secundaria"
+              iconeEsquerda={<Icone nome="disponivel" />}
+            >
+              Estou disponível
+            </BotaoLink>
+          </CardConteudo>
+        </Card>
+      </section>
 
-      <AlternativasDeCarreira excetoId={jornada.profissaoId} />
+      <section className="mt-6">
+        <div className="flex flex-wrap gap-2">
+          {filtros.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFiltro(item.id)}
+              className={
+                filtro === item.id
+                  ? "preenchimento-acao rounded-full px-4 py-2 text-sm font-medium text-primary-ink"
+                  : "superficie rounded-full border border-hairline px-4 py-2 text-sm text-muted hover:bg-elevated hover:text-ink"
+              }
+            >
+              {item.rotulo}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          {itens.map((item) =>
+            item.tipo === "disponibilidade" ? (
+              <CardProfissional key={item.profissional.id} item={item} />
+            ) : (
+              <CardTrabalho key={item.trabalho.id} item={item} />
+            )
+          )}
+        </div>
+      </section>
     </>
   )
 }
 
-/** Um indicador clicável: o número leva pro detalhamento dele (ONB-02). */
-function Indicador({
-  icone,
-  rotulo,
-  valor,
-  href,
-}: {
-  icone: string
-  rotulo: string
-  valor: string
-  href: string
-}) {
+function CardProfissional({ item }: { item: Extract<ItemFeed, { tipo: "disponibilidade" }> }) {
+  const p = item.profissional
   return (
-    <div className="superficie relative rounded-ds-surface border border-hairline p-4 transition-colors hover:border-primary/40">
-      <dt className="flex items-center gap-1.5 text-[11px] tracking-wide text-muted uppercase">
-        <Icone nome={icone} className="size-3.5 text-primary-accent" />
-        {rotulo}
-      </dt>
-      <dd className="mt-1.5 font-display text-lg text-ink tabular-nums">
-        <Link href={href} className="after:absolute after:inset-0">
-          {valor}
-        </Link>
-      </dd>
-    </div>
+    <Card className="overflow-hidden">
+      <CardConteudo className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 gap-3">
+            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/12 text-primary-accent">
+              <Icone nome="perfil" className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-display text-lg text-ink">{p.nome}</h2>
+                {p.disponivelAgora && (
+                  <span className="rounded-full bg-success/12 px-2 py-0.5 text-[11px] font-medium text-success">
+                    Disponível agora
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-medium text-ink">{p.profissao}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted">
+                <Icone nome="local" className="size-3.5" />
+                {p.bairro} · {p.distanciaKm.toFixed(1)} km
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="font-display text-lg text-ink">R$ {p.valor}</p>
+            <p className="text-[11px] text-muted">/{rotuloCobranca(p.formaCobranca)}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-hairline pt-4 text-[13px] text-muted">
+          <span>★ {p.avaliacao.toFixed(1)}</span>
+          <span>{p.trabalhosConcluidos} trabalhos</span>
+          <span>Raio de {p.raioKm} km</span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <BotaoLink href={`/app/profissionais/${p.id}`} variante="secundaria">
+            Ver perfil
+          </BotaoLink>
+          <BotaoLink href={`/app/publicar?profissional=${p.id}`}>
+            Contratar
+          </BotaoLink>
+        </div>
+      </CardConteudo>
+    </Card>
   )
 }
 
-/**
- * Carreiras alternativas, sem competir com a ação principal (ONB-01): três
- * linhas discretas no pé da tela, e trocar não apaga nada.
- */
-function AlternativasDeCarreira({ excetoId }: { excetoId: string | null }) {
-  const alternativas = PROFISSOES.filter((profissao) => profissao.id !== excetoId).slice(0, 3)
-
+function CardTrabalho({ item }: { item: Extract<ItemFeed, { tipo: "trabalho" }> }) {
+  const t = item.trabalho
   return (
-    <section aria-labelledby="alternativas-titulo" className="mt-8 border-t border-hairline pt-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="alternativas-titulo" className="font-display text-sm text-ink">
-          {textos.alternativas.titulo}
-        </h2>
-        <p className="text-[12px] text-muted">{textos.alternativas.texto}</p>
-      </div>
+    <Card className="overflow-hidden">
+      <CardConteudo className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary-accent">
+                Trabalho
+              </span>
+              {t.urgente && (
+                <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[11px] font-medium text-danger">
+                  Preciso agora
+                </span>
+              )}
+            </div>
+            <h2 className="mt-2 font-display text-lg text-ink">{t.titulo}</h2>
+            <p className="mt-1 text-sm font-medium text-ink">{t.categoria}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-display text-lg text-ink">
+              R$ {t.orcamentoMin}–{t.orcamentoMax}
+            </p>
+            <p className="text-[11px] text-muted">orçamento</p>
+          </div>
+        </div>
 
-      <ul className="mt-3 flex flex-wrap gap-2">
-        {alternativas.map((profissao) => (
-          <li key={profissao.id}>
-            <Link
-              href={`/app/carreiras/${profissao.id}`}
-              className="superficie inline-flex items-center gap-2 rounded-ds border border-hairline px-3 py-2 text-[13px] text-ink transition-colors hover:border-primary/40 hover:bg-elevated pointer-coarse:min-h-11"
-            >
-              {profissao.nome}
-              <Icone nome="seta-direita" className="size-3.5 text-muted" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+        <div className="mt-4 grid gap-2 text-[13px] text-muted sm:grid-cols-3">
+          <span className="flex items-center gap-1.5">
+            <Icone nome="local" className="size-3.5" />
+            {t.bairro} · {t.distanciaKm.toFixed(1)} km
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Icone nome="calendar" className="size-3.5" />
+            {t.quando}
+          </span>
+          <span>{t.propostas} propostas</span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-hairline pt-4">
+          <BotaoLink href={`/app/trabalhos/${t.id}`} variante="secundaria">
+            Ver trabalho
+          </BotaoLink>
+          <BotaoLink href={`/app/trabalhos/${t.id}?proposta=1`} iconeDireita={<Icone nome="seta-direita" />}>
+            Enviar proposta
+          </BotaoLink>
+        </div>
+      </CardConteudo>
+    </Card>
   )
 }
 
-function saudacaoDaHora() {
-  const hora = new Date().getHours()
-  if (hora < 12) return textos.saudacao.manha
-  if (hora < 18) return textos.saudacao.tarde
-  return textos.saudacao.noite
+function distancia(item: ItemFeed) {
+  return item.tipo === "disponibilidade"
+    ? item.profissional.distanciaKm
+    : item.trabalho.distanciaKm
+}
+
+function rotuloCobranca(tipo: string) {
+  if (tipo === "diaria") return "diária"
+  if (tipo === "hora") return "hora"
+  if (tipo === "m2") return "m²"
+  return "serviço"
 }
