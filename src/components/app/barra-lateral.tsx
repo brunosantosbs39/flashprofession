@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { sistema } from "@/content/site"
+import { navMarketplace } from "@/marketplace/nav"
 import { cn } from "@/lib/cn"
 import { Icone } from "./icone"
 import { Logo } from "./logo"
@@ -14,7 +15,6 @@ type PropsBarraLateral = {
   aoFechar: () => void
 }
 
-/** `/app` só casa exato; os demais também valem para rotas filhas (`/app/carreiras/abc`). */
 function ehAtivo(atual: string, href: string) {
   if (href === "/app") return atual === "/app"
   return atual === href || atual.startsWith(`${href}/`)
@@ -24,13 +24,10 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
   const atual = usePathname()
   const refFechar = useRef<HTMLButtonElement>(null)
 
-  // No celular, chegar na rota é o fim da tarefa: o menu sai da frente sozinho.
   useEffect(() => {
     aoFechar()
   }, [atual, aoFechar])
 
-  // Voltar para o desktop com o menu aberto deixaria o body travado sem nada na
-  // tela explicando o porquê.
   useEffect(() => {
     const consulta = window.matchMedia("(min-width: 1024px)")
     const aoMudar = () => {
@@ -43,10 +40,7 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
   useEffect(() => {
     if (!aberta) return
 
-    // O menu fechado é `invisible`, e elemento invisível não recebe foco. Só no
-    // quadro seguinte o navegador já aplicou a classe nova, e aí o foco pega.
     const quadro = requestAnimationFrame(() => refFechar.current?.focus())
-
     const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") aoFechar()
     }
@@ -64,8 +58,6 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
 
   return (
     <>
-      {/* Área de toque para fechar. Fica fora da árvore de acessibilidade porque
-          o botão "fechar" e a tecla Esc já cobrem quem não usa mouse. */}
       <button
         type="button"
         tabIndex={-1}
@@ -77,17 +69,11 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
         )}
       />
 
-      {/* 248px é a largura da coluna; o mesmo número aparece no `lg:pl-[248px]`
-          do layout, que é o que abre espaço para ela no desktop. */}
       <aside
         id="barra-lateral"
         className={cn(
-          // `.painel-lateral` é o fundo com gradiente e o fio de 1px por dentro
-          // da borda direita. A receita mora no globals.css e vale nos 71 temas.
           "painel-lateral fixed inset-y-0 left-0 z-50 flex w-[248px] max-w-[86vw] flex-col border-r border-hairline",
           "transition-[transform,visibility] duration-200 ease-out",
-          // `invisible` tira o menu fechado do foco e do leitor de tela sem
-          // precisar de um segundo bloco de markup só para o desktop.
           aberta ? "visible translate-x-0" : "invisible -translate-x-full",
           "lg:visible lg:translate-x-0"
         )}
@@ -112,27 +98,19 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
         </div>
 
         <nav
-          // O tour de boas-vindas aponta pra este bloco. Ver src/content/tour.ts.
-          data-tour="menu"
           aria-label={sistema.casca.navegacao}
           className="flex-1 overflow-y-auto px-3 py-4"
         >
           <ul className="flex flex-col gap-0.5">
-            {sistema.nav.map((item) => {
+            {navMarketplace.map((item) => {
               const ativo = ehAtivo(atual, item.href)
-
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     aria-current={ativo ? "page" : undefined}
-                    data-tour={item.tour}
                     className={cn(
                       "group relative flex items-center gap-3 rounded-ds px-3 py-2 text-sm transition-colors pointer-coarse:min-h-11",
-                      // Três sinais somados (tarja na cor de ação, superfície
-                      // elevada e peso do texto) porque a diferença entre
-                      // `surface` e `elevated` é sutil em parte dos 71 temas.
-                      // Sozinha, ela não marcaria nada.
                       ativo
                         ? "superficie-elevada font-medium text-ink"
                         : "text-muted hover:bg-elevated hover:text-ink"
@@ -159,6 +137,15 @@ export function BarraLateral({ aberta, aoFechar }: PropsBarraLateral) {
             })}
           </ul>
         </nav>
+
+        <div className="border-t border-hairline p-3">
+          <div className="rounded-ds border border-hairline bg-elevated/50 p-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">FlashProfession 2.0</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink">
+              Marketplace local de profissionais e oportunidades.
+            </p>
+          </div>
+        </div>
       </aside>
     </>
   )
